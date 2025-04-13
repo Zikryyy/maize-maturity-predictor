@@ -212,7 +212,7 @@ def main():
         }
         try:
             with st.spinner("Analyzing..."):
-                response = requests.post("http://127.0.0.1:5000/predict", json=data)
+                response = requests.post("http://localhost:8000/predict", json=data)
                 result = response.json()
 
             if "prediction" in result:
