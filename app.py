@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 import numpy as np
-from PIL import Image, ImageFilter, ImageEnhance
+from PIL import Image
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
@@ -11,7 +11,6 @@ from fastapi.middleware.cors import CORSMiddleware
 import joblib
 from threading import Thread
 import nest_asyncio
-from io import BytesIO
 
 # --- FastAPI Backend ---
 app = FastAPI()
@@ -55,23 +54,6 @@ def run_fastapi():
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
-# Image processing functions
-def apply_filter(img, filter_name):
-    """Apply selected filter to image"""
-    if filter_name == "Edges":
-        return img.filter(ImageFilter.FIND_EDGES)
-    elif filter_name == "Contrast":
-        return ImageEnhance.Contrast(img).enhance(2)
-    elif filter_name == "Color":
-        return ImageEnhance.Color(img).enhance(1.5)
-    elif filter_name == "Grayscale":
-        return img.convert("L")
-    elif filter_name == "Blur":
-        return img.filter(ImageFilter.GaussianBlur(3))
-    else:  # Original
-        return img
-
-
 # --- Streamlit Frontend ---
 def main():
     st.set_page_config(
@@ -80,7 +62,7 @@ def main():
         initial_sidebar_state="collapsed"
     )
 
-    # Enhanced CSS with processing preview styles
+    # High-contrast minimalist theme
     st.markdown("""
         <style>
             /* Base styles */
@@ -99,20 +81,62 @@ def main():
                 font-weight: 700;
             }
 
-            /* Image comparison styling */
-            .image-column {
-                padding: 10px;
+            /* All text elements - force black */
+            .stRadio, .stRadio label, 
+            .stFileUploader, .stFileUploader label, 
+            .stFileUploader small,
+            .stNumberInput label, 
+            .stSlider label,
+            .stSuccess, .stSuccess div {
+                color: black !important;
+                font-weight: 500 !important;
             }
-            .processing-option {
-                padding: 8px 12px;
-                border-radius: 20px;
-                margin: 5px 0;
-                display: inline-block;
+
+            /* Headings */
+            h2, h3, h4 {
+                color: #1e40af !important;
+                font-weight: 600;
             }
-            .processing-option:hover {
-                background: #f0f4f8;
+
+            /* File uploader box */
+            .stFileUploader>section {
+                border: 2px dashed #1a56db !important;
+                background: white !important;
             }
-            /* [Rest of your existing CSS remains unchanged] */
+
+            /* Success message box */
+            .stSuccess {
+                background-color: #f0f4f8 !important;
+                border-left: 4px solid #1a56db !important;
+                font-weight: 600;
+            }
+
+            /* Make sure all text is visible */
+            div[data-testid="stMarkdownContainer"] p,
+            div[data-testid="stMarkdownContainer"] div {
+                color: black !important;
+            }
+
+            /* Button styling */
+            .stButton>button {
+                background-color: #2563eb !important;
+                color: white !important;
+                border: none;
+                border-radius: 8px;
+                padding: 0.75rem 1.5rem;
+                width: 100%;
+                font-weight: 500;
+            }
+
+            /* History cards */
+            .history-card {
+                padding: 1rem;
+                margin-bottom: 1rem;
+                border-radius: 8px;
+                background-color: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-left: 4px solid #2563eb;
+            }
         </style>
     """, unsafe_allow_html=True)
 
@@ -149,48 +173,15 @@ def main():
 
         if uploaded_file is not None:
             image = Image.open(uploaded_file).convert("RGB")
+            st.image(image, caption="Uploaded Image", use_column_width=True)
 
-            # --- NEW: Real-Time Processing Preview ---
-            st.markdown("### Image Analysis")
-            col1, col2 = st.columns(2)
-
-            with col1:
-                st.markdown("#### Original Kernel")
-                st.image(image, use_column_width=True)
-
-            with col2:
-                st.markdown("#### Processed View")
-
-                # Interactive filter selection
-                filter_option = st.radio(
-                    "Processing effect:",
-                    options=["Original", "Edges", "Contrast", "Color", "Grayscale", "Blur"],
-                    horizontal=True,
-                    label_visibility="collapsed"
-                )
-
-                # Apply processing
-                processed_img = apply_filter(image, filter_option)
-                st.image(processed_img,
-                         caption=f"Filter: {filter_option}",
-                         use_column_width=True)
-
-                # Download button
-                buf = BytesIO()
-                processed_img.save(buf, format="PNG")
-                st.download_button(
-                    label="⬇️ Download Processed Image",
-                    data=buf.getvalue(),
-                    file_name=f"processed_{uploaded_file.name}",
-                    mime="image/png"
-                )
-
-            # Existing RGB extraction
+            # Process image and show RGB values
             resized = image.resize((100, 100))
             img_np = np.array(resized)
             avg_color = img_np.mean(axis=(0, 1)).astype(int)
             r, g, b = int(avg_color[0]), int(avg_color[1]), int(avg_color[2])
 
+            # High-contrast success message
             st.success(f"**Extracted RGB values → R: {r}, G: {g}, B: {b}**")
 
             # RGB heatmap
@@ -266,7 +257,6 @@ def main():
             mime="text/csv",
             use_container_width=True
         )
-
 
 if __name__ == "__main__":
     # Start FastAPI in a separate thread
