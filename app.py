@@ -11,7 +11,6 @@ from fastapi.middleware.cors import CORSMiddleware
 import joblib
 from threading import Thread
 import nest_asyncio
-from streamlit_cropper import st_cropper  # New import for cropping
 
 # --- FastAPI Backend ---
 app = FastAPI()
@@ -138,11 +137,6 @@ def main():
                 border: 1px solid #e2e8f0;
                 border-left: 4px solid #2563eb;
             }
-
-            /* Cropper styles */
-            .cropper-container {
-                margin: 0 auto;
-            }
         </style>
     """, unsafe_allow_html=True)
 
@@ -179,35 +173,16 @@ def main():
 
         if uploaded_file is not None:
             image = Image.open(uploaded_file).convert("RGB")
+            st.image(image, caption="Uploaded Image", use_column_width=True)
 
-            # --- NEW CROPPING INTERFACE ---
-            st.markdown("### Step 1: Crop the Maize Kernel")
-            cropped_img = st_cropper(
-                image,
-                aspect_ratio=(1, 1),  # Square crop
-                box_color='#1a56db',  # Matches your theme
-                realtime_update=True,
-                should_resize_image=True,
-                return_type="pil"  # Get PIL image directly
-            )
-
-            # Show before/after comparison
-            col1, col2 = st.columns(2)
-            with col1:
-                st.markdown("**Original Image**")
-                st.image(image, use_column_width=True)
-            with col2:
-                st.markdown("**Cropped Area**")
-                st.image(cropped_img, use_column_width=True)
-
-            # --- CONTINUE WITH EXISTING PROCESSING ---
-            st.markdown("### Step 2: Color Analysis")
-            resized = cropped_img.resize((100, 100))  # Now using cropped image
+            # Process image and show RGB values
+            resized = image.resize((100, 100))
             img_np = np.array(resized)
             avg_color = img_np.mean(axis=(0, 1)).astype(int)
             r, g, b = int(avg_color[0]), int(avg_color[1]), int(avg_color[2])
 
-            st.success(f"**Extracted RGB from cropped area → R: {r}, G: {g}, B: {b}**")
+            # High-contrast success message
+            st.success(f"**Extracted RGB values → R: {r}, G: {g}, B: {b}**")
 
             # RGB heatmap
             st.markdown("## Color Channels Analysis")
@@ -282,7 +257,6 @@ def main():
             mime="text/csv",
             use_container_width=True
         )
-
 
 if __name__ == "__main__":
     # Start FastAPI in a separate thread
