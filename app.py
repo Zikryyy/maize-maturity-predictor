@@ -5,7 +5,7 @@ from PIL import Image
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, JSONResponse
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 import joblib
@@ -53,15 +53,20 @@ async def predict(request: Request):
 async def predict_batch(request: Request):
     try:
         data = await request.json()
-        records = data.get("records", [])
+        if "records" not in data:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Missing 'records' in request body"}
+            )
 
+        records = data["records"]
         if not records:
-            return {"error": "No records provided"}
+            return {"predictions": []}
 
         predictions = []
         for record in records:
             try:
-                # Convert all values to float
+                # Case-insensitive field access
                 r = float(record.get("R", record.get("r", 0)))
                 g = float(record.get("G", record.get("g", 0)))
                 b = float(record.get("B", record.get("b", 0)))
@@ -72,10 +77,10 @@ async def predict_batch(request: Request):
                 prediction = model.predict(features)
                 result = "Mature" if prediction[0] == 1 else "Immature"
 
-                # Return all original fields plus prediction
-                output_record = record.copy()
-                output_record["Prediction"] = result
-                predictions.append(output_record)
+                predictions.append({
+                    **record,
+                    "Prediction": result
+                })
             except Exception as e:
                 predictions.append({
                     **record,
@@ -84,8 +89,17 @@ async def predict_batch(request: Request):
                 })
 
         return {"predictions": predictions}
+
     except Exception as e:
-        return {"error": f"Server error: {str(e)}"}
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Server error: {str(e)}"}
+        )
+
+
+@app.get("/routes")
+async def list_routes():
+    return [{"path": route.path, "name": route.name} for route in app.routes]
 
 
 def run_fastapi():
@@ -283,20 +297,21 @@ def main():
                         })
 
                         # Prepare data for API
-                        records = df[['r', 'g', 'b', 'temperature', 'humidity']].to_dict('records')
+                        records = df[list(required_cols)].to_dict('records')
 
                         try:
                             with st.spinner("Processing batch predictions..."):
+                                st.write("First record sample:", records[0])  # Debug
+
                                 response = requests.post(
                                     "http://localhost:8000/predict_batch",
                                     json={"records": records},
                                     timeout=10
                                 )
 
-                                # Debug: Show raw response
-                                st.write("API Response:", response.text)
+                                st.write("Raw response:", response.text)  # Debug
 
-                                response.raise_for_status()  # Raises exception for 4XX/5XX
+                                response.raise_for_status()
                                 result = response.json()
 
                             if "predictions" in result:
@@ -305,9 +320,9 @@ def main():
                                 # Add to history
                                 for _, row in result_df.iterrows():
                                     entry = {
-                                        "R": row.get('R', row.get('r')),
-                                        "G": row.get('G', row.get('g')),
-                                        "B": row.get('B', row.get('b')),
+                                        "R": row.get('r', row.get('R')),
+                                        "G": row.get('g', row.get('G')),
+                                        "B": row.get('b', row.get('B')),
                                         "Temp": row.get('temperature', row.get('Temperature')),
                                         "Humidity": row.get('humidity', row.get('Humidity')),
                                         "Prediction": row['Prediction']
@@ -332,12 +347,11 @@ def main():
                                 st.error(f"API Error: {result.get('error', 'No predictions returned')}")
                         except requests.exceptions.RequestException as e:
                             st.error(f"API Connection Failed: {str(e)}")
-                        except ValueError as e:
-                            st.error(f"Invalid API Response: {str(e)}")
+                            st.error(f"Full error: {e.response.text if hasattr(e, 'response') else ''}")
                         except Exception as e:
-                            st.error(f"Unexpected Error: {str(e)}")
+                            st.error(f"Processing Error: {str(e)}")
             except Exception as e:
-                st.error(f"File Processing Error: {str(e)}")
+                st.error(f"File Error: {str(e)}")
 
     # Environmental data (only show if not in batch mode)
     if mode != "Batch Prediction from CSV/Excel":
