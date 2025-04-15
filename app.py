@@ -11,7 +11,6 @@ from fastapi.middleware.cors import CORSMiddleware
 import joblib
 from threading import Thread
 import nest_asyncio
-from streamlit_cropper import st_cropper
 
 # --- FastAPI Backend ---
 app = FastAPI()
@@ -138,12 +137,6 @@ def main():
                 border: 1px solid #e2e8f0;
                 border-left: 4px solid #2563eb;
             }
-
-            /* Cropper container */
-            .cropper-container {
-                margin: 0 auto;
-                max-width: 100%;
-            }
         </style>
     """, unsafe_allow_html=True)
 
@@ -179,51 +172,28 @@ def main():
         )
 
         if uploaded_file is not None:
-            try:
-                image = Image.open(uploaded_file).convert("RGB")
+            image = Image.open(uploaded_file).convert("RGB")
+            st.image(image, caption="Uploaded Image", use_column_width=True)
 
-                # Image cropping section
-                st.markdown("### Crop the Maize Kernel")
-                cropped_img = st_cropper(
-                    image,
-                    aspect_ratio=(1, 1),
-                    box_color='#1a56db',
-                    realtime_update=True,
-                    should_resize_image=True,
-                    return_type="pil"  # Return as PIL Image
-                )
+            # Process image and show RGB values
+            resized = image.resize((100, 100))
+            img_np = np.array(resized)
+            avg_color = img_np.mean(axis=(0, 1)).astype(int)
+            r, g, b = int(avg_color[0]), int(avg_color[1]), int(avg_color[2])
 
-                # Display original and cropped images side by side
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.markdown("**Original Image**")
-                    st.image(image, use_column_width=True)
-                with col2:
-                    st.markdown("**Cropped Area**")
-                    st.image(cropped_img, use_column_width=True)
+            # High-contrast success message
+            st.success(f"**Extracted RGB values → R: {r}, G: {g}, B: {b}**")
 
-                # Process cropped image for RGB values
-                resized = cropped_img.resize((100, 100))
-                img_np = np.array(resized)
-                avg_color = img_np.mean(axis=(0, 1)).astype(int)
-                r, g, b = int(avg_color[0]), int(avg_color[1]), int(avg_color[2])
-
-                st.success(f"**Extracted RGB values → R: {r}, G: {g}, B: {b}**")
-
-                # RGB heatmap visualization
-                st.markdown("## Color Channels Analysis")
-                fig, axs = plt.subplots(1, 3, figsize=(12, 3))
-                cmap_labels = ['Red', 'Green', 'Blue']
-                for i, ax in enumerate(axs):
-                    ax.imshow(img_np[:, :, i], cmap='Reds' if i == 0 else 'Greens' if i == 1 else 'Blues')
-                    ax.set_title(cmap_labels[i], color='#1e40af', fontsize=12)
-                    ax.axis("off")
-                plt.tight_layout()
-                st.pyplot(fig)
-
-            except Exception as e:
-                st.error(f"Image processing error: {str(e)}")
-                st.stop()
+            # RGB heatmap
+            st.markdown("## Color Channels Analysis")
+            fig, axs = plt.subplots(1, 3, figsize=(12, 3))
+            cmap_labels = ['Red', 'Green', 'Blue']
+            for i, ax in enumerate(axs):
+                ax.imshow(img_np[:, :, i], cmap='Reds' if i == 0 else 'Greens' if i == 1 else 'Blues')
+                ax.set_title(cmap_labels[i], color='#1e40af', fontsize=12)
+                ax.axis("off")
+            plt.tight_layout()
+            st.pyplot(fig)
 
     # Environmental data
     st.markdown("## Environmental Conditions")
@@ -287,7 +257,6 @@ def main():
             mime="text/csv",
             use_container_width=True
         )
-
 
 if __name__ == "__main__":
     # Start FastAPI in a separate thread
