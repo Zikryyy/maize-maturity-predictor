@@ -5,16 +5,12 @@ from PIL import Image
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
-from fastapi import FastAPI, Request, JSONResponse
+from fastapi import FastAPI, Request
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 import joblib
 from threading import Thread
 import nest_asyncio
-from socket import socket, AF_INET, SOCK_STREAM
-import random
-import signal
-import atexit
 
 # --- FastAPI Backend ---
 app = FastAPI()
@@ -27,18 +23,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # Load the model
-@st.cache_resource
-def load_model():
-    try:
-        return joblib.load("rf_model_maize_maturity.pkl")
-    except Exception as e:
-        st.error(f"Failed to load model: {str(e)}")
-        return None
-
-
-model = load_model()
+try:
+    model = joblib.load("rf_model_maize_maturity.pkl")
+except Exception as e:
+    st.error(f"Failed to load model: {str(e)}")
+    model = None
 
 
 @app.post("/predict")
@@ -56,39 +46,12 @@ async def predict(request: Request):
         result = "Mature" if prediction[0] == 1 else "Immature"
         return {"prediction": result}
     except Exception as e:
-        return JSONResponse(
-            status_code=400,
-            content={"error": str(e)}
-        )
-
-
-def find_available_port(start_port=8000, end_port=9000):
-    """Find random available port in range"""
-    for port in range(start_port, end_port):
-        with socket(AF_INET, SOCK_STREAM) as s:
-            try:
-                s.bind(('', port))
-                return port
-            except:
-                continue
-    raise OSError("No available ports found")
+        return {"error": str(e)}
 
 
 def run_fastapi():
-    port = find_available_port()
-    st.session_state['api_port'] = port
-    print(f"🌐 API running on port {port}")
     nest_asyncio.apply()
-
-    config = uvicorn.Config(
-        app,
-        host="0.0.0.0",
-        port=port,
-        log_level="info",
-        timeout_keep_alive=30
-    )
-    server = uvicorn.Server(config)
-    server.run()
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
 # --- Streamlit Frontend ---
@@ -99,39 +62,96 @@ def main():
         initial_sidebar_state="collapsed"
     )
 
-    # Initialize session state
-    if 'api_port' not in st.session_state:
-        st.session_state.api_port = 8001  # Default fallback
-
     # High-contrast minimalist theme
     st.markdown("""
         <style>
-            /* Your existing styles */
+            /* Base styles */
             body, .stApp {
                 font-family: 'Arial', sans-serif;
                 background-color: white !important;
                 color: black !important;
             }
-            /* ... (keep all your existing styles) ... */
+
+            /* Title */
+            h1 {
+                color: #1a56db !important;
+                text-align: center;
+                margin-bottom: 1.5rem;
+                font-size: 2rem;
+                font-weight: 700;
+            }
+
+            /* All text elements - force black */
+            .stRadio, .stRadio label, 
+            .stFileUploader, .stFileUploader label, 
+            .stFileUploader small,
+            .stNumberInput label, 
+            .stSlider label,
+            .stSuccess, .stSuccess div {
+                color: black !important;
+                font-weight: 500 !important;
+            }
+
+            /* Headings */
+            h2, h3, h4 {
+                color: #1e40af !important;
+                font-weight: 600;
+            }
+
+            /* File uploader box */
+            .stFileUploader>section {
+                border: 2px dashed #1a56db !important;
+                background: white !important;
+            }
+
+            /* Success message box */
+            .stSuccess {
+                background-color: #f0f4f8 !important;
+                border-left: 4px solid #1a56db !important;
+                font-weight: 600;
+            }
+
+            /* Make sure all text is visible */
+            div[data-testid="stMarkdownContainer"] p,
+            div[data-testid="stMarkdownContainer"] div {
+                color: black !important;
+            }
+
+            /* Button styling */
+            .stButton>button {
+                background-color: #2563eb !important;
+                color: white !important;
+                border: none;
+                border-radius: 8px;
+                padding: 0.75rem 1.5rem;
+                width: 100%;
+                font-weight: 500;
+            }
+
+            /* History cards */
+            .history-card {
+                padding: 1rem;
+                margin-bottom: 1rem;
+                border-radius: 8px;
+                background-color: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-left: 4px solid #2563eb;
+            }
         </style>
     """, unsafe_allow_html=True)
 
-    # App title with port info
-    st.markdown(f"# Blue Maize Maturity Predictor [Port:{st.session_state.api_port}]")
+    # App title
+    st.markdown("# Blue Maize Maturity Predictor")
 
     HISTORY_FILE = "prediction_history.csv"
 
-    # Load history with caching
-    @st.cache_data
-    def load_history():
-        if os.path.exists(HISTORY_FILE):
-            return pd.read_csv(HISTORY_FILE).to_dict(orient="records")
-        return []
-
+    # Load history
     if "history" not in st.session_state:
-        st.session_state.history = load_history()
+        if os.path.exists(HISTORY_FILE):
+            st.session_state.history = pd.read_csv(HISTORY_FILE).to_dict(orient="records")
+        else:
+            st.session_state.history = []
 
-    # Rest of your existing Streamlit UI code remains the same
     # Input mode
     st.markdown("## Input Method")
     mode = st.radio("", ["Manual RGB Entry", "Upload Image for RGB"],
@@ -152,27 +172,27 @@ def main():
         )
 
         if uploaded_file is not None:
-            # Optimized image processing
-            @st.cache_data
-            def process_image(file):
-                image = Image.open(file).convert("RGB")
-                resized = image.resize((100, 100))
-                img_np = np.array(resized)
-                avg_color = img_np.mean(axis=(0, 1)).astype(int)
-                return image, img_np, avg_color
-
-            image, img_np, avg_color = process_image(uploaded_file)
-            r, g, b = avg_color
+            image = Image.open(uploaded_file).convert("RGB")
             st.image(image, caption="Uploaded Image", use_column_width=True)
+
+            # Process image and show RGB values
+            resized = image.resize((100, 100))
+            img_np = np.array(resized)
+            avg_color = img_np.mean(axis=(0, 1)).astype(int)
+            r, g, b = int(avg_color[0]), int(avg_color[1]), int(avg_color[2])
+
+            # High-contrast success message
             st.success(f"**Extracted RGB values → R: {r}, G: {g}, B: {b}**")
 
             # RGB heatmap
             st.markdown("## Color Channels Analysis")
             fig, axs = plt.subplots(1, 3, figsize=(12, 3))
+            cmap_labels = ['Red', 'Green', 'Blue']
             for i, ax in enumerate(axs):
                 ax.imshow(img_np[:, :, i], cmap='Reds' if i == 0 else 'Greens' if i == 1 else 'Blues')
-                ax.set_title(['Red', 'Green', 'Blue'][i], color='#1e40af', fontsize=12)
+                ax.set_title(cmap_labels[i], color='#1e40af', fontsize=12)
                 ax.axis("off")
+            plt.tight_layout()
             st.pyplot(fig)
 
     # Environmental data
@@ -183,57 +203,40 @@ def main():
     with col2:
         hum = st.slider("Humidity (%)", 30.0, 80.0, 50.0)
 
-    # Predict button with improved error handling
+    # Predict button
     if st.button("Predict Maturity", type="primary"):
         data = {
             "R": r, "G": g, "B": b,
             "temperature": temp,
             "humidity": hum
         }
-
         try:
             with st.spinner("Analyzing..."):
-                response = requests.post(
-                    f"http://localhost:{st.session_state.api_port}/predict",
-                    json=data,
-                    timeout=5
-                )
+                response = requests.post("http://localhost:8000/predict", json=data)
+                result = response.json()
 
-                if response.status_code == 200:
-                    result = response.json()
-                    prediction = result["prediction"]
-                    st.success(f"Prediction: **{prediction}**")
+            if "prediction" in result:
+                prediction = result["prediction"]
+                st.success(f"Prediction: **{prediction}**")
 
-                    entry = {
-                        "R": r, "G": g, "B": b,
-                        "Temp": temp, "Humidity": hum,
-                        "Prediction": prediction
-                    }
-                    st.session_state.history.append(entry)
-                    pd.DataFrame(st.session_state.history).to_csv(HISTORY_FILE, index=False)
-                else:
-                    st.error(f"API Error: {response.text}")
-
-        except requests.exceptions.RequestException as e:
+                entry = {
+                    "R": r, "G": g, "B": b,
+                    "Temp": temp, "Humidity": hum,
+                    "Prediction": prediction
+                }
+                st.session_state.history.append(entry)
+                pd.DataFrame(st.session_state.history).to_csv(HISTORY_FILE, index=False)
+            else:
+                st.error(f"Error: {result.get('error', 'Unknown error')}")
+        except Exception as e:
             st.error(f"Connection failed: {str(e)}")
-            st.error("Please ensure the backend service is running")
 
-    # History section with pagination
+    # History section
     if st.session_state.history:
         st.markdown("## Prediction History")
-
-        # Pagination
-        items_per_page = 5
-        total_pages = (len(st.session_state.history) // items_per_page + 1
-                       page = st.number_input("Page", min_value=1, max_value=total_pages, value=1)
-
-        start_idx = (page - 1) * items_per_page
-        end_idx = min(page * items_per_page, len(st.session_state.history))
-
-        for i, entry in enumerate(reversed(st.session_state.history[start_idx:end_idx]), start_idx + 1):
-            with
-        st.container():
-        st.markdown(f"""
+        for i, entry in enumerate(reversed(st.session_state.history), 1):
+            with st.container():
+                st.markdown(f"""
                 <div class="history-card">
                     <div style='font-weight: 600; color: #1e40af;'>Prediction #{i}</div>
                     <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;'>
@@ -255,27 +258,9 @@ def main():
             use_container_width=True
         )
 
-        # Cleanup handler
-
-
-def cleanup():
-    print("🛑 Cleaning up resources...")
-    if 'api_port' in st.session_state:
-        try:
-            requests.post(f"http://localhost:{st.session_state.api_port}/shutdown", timeout=1)
-        except:
-            pass
-
-
 if __name__ == "__main__":
-    # Register cleanup
-    atexit.register(cleanup)
-
     # Start FastAPI in a separate thread
-    try:
-        Thread(target=run_fastapi, daemon=True).start()
-    except Exception as e:
-        st.error(f"Failed to start API: {str(e)}")
+    Thread(target=run_fastapi, daemon=True).start()
 
     # Start Streamlit
     main()
