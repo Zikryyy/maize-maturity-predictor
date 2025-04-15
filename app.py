@@ -11,7 +11,6 @@ from fastapi.middleware.cors import CORSMiddleware
 import joblib
 from threading import Thread
 import nest_asyncio
-from datetime import datetime
 
 # --- FastAPI Backend ---
 app = FastAPI()
@@ -223,8 +222,7 @@ def main():
                 entry = {
                     "R": r, "G": g, "B": b,
                     "Temp": temp, "Humidity": hum,
-                    "Prediction": prediction,
-                    "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Add timestamp
+                    "Prediction": prediction
                 }
                 st.session_state.history.append(entry)
                 pd.DataFrame(st.session_state.history).to_csv(HISTORY_FILE, index=False)
@@ -242,11 +240,10 @@ def main():
                 <div class="history-card">
                     <div style='font-weight: 600; color: #1e40af;'>Prediction #{i}</div>
                     <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;'>
-                        <div><b>Time:</b> {entry['Timestamp']}</div>
-                        <div><b>Result:</b> {entry['Prediction']}</div>
                         <div><b>RGB:</b> {entry['R']}, {entry['G']}, {entry['B']}</div>
                         <div><b>Temp:</b> {entry['Temp']}°C</div>
                         <div><b>Humidity:</b> {entry['Humidity']}%</div>
+                        <div><b>Result:</b> {entry['Prediction']}</div>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
