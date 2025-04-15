@@ -49,6 +49,32 @@ async def predict(request: Request):
         return {"error": str(e)}
 
 
+@app.post("/predict_batch")
+async def predict_batch(request: Request):
+    try:
+        # Get the file from the request
+        data = await request.json()
+        records = data["records"]
+
+        predictions = []
+        for record in records:
+            r = float(record["R"])
+            g = float(record["G"])
+            b = float(record["B"])
+            temp = float(record["temperature"])
+            hum = float(record["humidity"])
+
+            features = np.array([[r, g, b, temp, hum]])
+            prediction = model.predict(features)
+            result = "Mature" if prediction[0] == 1 else "Immature"
+            record["Prediction"] = result
+            predictions.append(record)
+
+        return {"predictions": predictions}
+    except Exception as e:
+        return {"error": str(e)}
+
+
 def run_fastapi():
     nest_asyncio.apply()
     uvicorn.run(app, host="0.0.0.0", port=8000)
@@ -137,6 +163,12 @@ def main():
                 border: 1px solid #e2e8f0;
                 border-left: 4px solid #2563eb;
             }
+
+            /* Info box */
+            .stInfo {
+                background-color: #f0f4f8 !important;
+                border-left: 4px solid #1a56db !important;
+            }
         </style>
     """, unsafe_allow_html=True)
 
@@ -154,7 +186,7 @@ def main():
 
     # Input mode
     st.markdown("## Input Method")
-    mode = st.radio("", ["Manual RGB Entry", "Upload Image for RGB"],
+    mode = st.radio("", ["Manual RGB Entry", "Upload Image for RGB", "Batch Prediction from CSV/Excel"],
                     horizontal=True, label_visibility="collapsed")
 
     if mode == "Manual RGB Entry":
@@ -165,7 +197,7 @@ def main():
             g = st.number_input("Green (G)", min_value=0, max_value=255, value=100)
         with col3:
             b = st.number_input("Blue (B)", min_value=0, max_value=255, value=100)
-    else:
+    elif mode == "Upload Image for RGB":
         uploaded_file = st.file_uploader(
             "Drag and drop file here (Limit 200MB - JPG, JPEG, PNG)",
             type=["jpg", "jpeg", "png"]
@@ -194,42 +226,114 @@ def main():
                 ax.axis("off")
             plt.tight_layout()
             st.pyplot(fig)
+    else:  # Batch Prediction from CSV/Excel
+        st.markdown("### Upload CSV/Excel File")
+        st.info("Your file should contain columns for R, G, B, temperature, and humidity")
 
-    # Environmental data
-    st.markdown("## Environmental Conditions")
-    col1, col2 = st.columns(2)
-    with col1:
-        temp = st.slider("Temperature (°C)", 20.0, 35.0, 25.0)
-    with col2:
-        hum = st.slider("Humidity (%)", 30.0, 80.0, 50.0)
+        batch_file = st.file_uploader(
+            "Upload CSV or Excel file",
+            type=["csv", "xlsx"],
+            key="batch_uploader"
+        )
 
-    # Predict button
-    if st.button("Predict Maturity", type="primary"):
-        data = {
-            "R": r, "G": g, "B": b,
-            "temperature": temp,
-            "humidity": hum
-        }
-        try:
-            with st.spinner("Analyzing..."):
-                response = requests.post("http://localhost:8000/predict", json=data)
-                result = response.json()
+        if batch_file is not None:
+            try:
+                if batch_file.name.endswith('.csv'):
+                    df = pd.read_csv(batch_file)
+                else:
+                    df = pd.read_excel(batch_file)
 
-            if "prediction" in result:
-                prediction = result["prediction"]
-                st.success(f"Prediction: **{prediction}**")
+                # Show preview
+                st.markdown("### File Preview")
+                st.dataframe(df.head())
 
-                entry = {
-                    "R": r, "G": g, "B": b,
-                    "Temp": temp, "Humidity": hum,
-                    "Prediction": prediction
-                }
-                st.session_state.history.append(entry)
-                pd.DataFrame(st.session_state.history).to_csv(HISTORY_FILE, index=False)
-            else:
-                st.error(f"Error: {result.get('error', 'Unknown error')}")
-        except Exception as e:
-            st.error(f"Connection failed: {str(e)}")
+                # Check required columns
+                required_cols = {'R', 'G', 'B', 'temperature', 'humidity'}
+                if not required_cols.issubset(df.columns):
+                    st.error(f"File must contain these columns: {', '.join(required_cols)}")
+                else:
+                    if st.button("Process Batch File", type="primary"):
+                        # Prepare data for API
+                        records = df[['R', 'G', 'B', 'temperature', 'humidity']].to_dict('records')
+
+                        with st.spinner("Processing batch predictions..."):
+                            response = requests.post(
+                                "http://localhost:8000/predict_batch",
+                                json={"records": records}
+                            )
+                            result = response.json()
+
+                        if "predictions" in result:
+                            result_df = pd.DataFrame(result["predictions"])
+
+                            # Add to history
+                            for _, row in result_df.iterrows():
+                                entry = {
+                                    "R": row['R'],
+                                    "G": row['G'],
+                                    "B": row['B'],
+                                    "Temp": row['temperature'],
+                                    "Humidity": row['humidity'],
+                                    "Prediction": row['Prediction']
+                                }
+                                st.session_state.history.append(entry)
+
+                            # Save history
+                            pd.DataFrame(st.session_state.history).to_csv(HISTORY_FILE, index=False)
+
+                            # Show results
+                            st.success(f"Processed {len(result_df)} predictions successfully!")
+                            st.dataframe(result_df)
+
+                            # Download button
+                            st.download_button(
+                                label="Download Predictions as CSV",
+                                data=result_df.to_csv(index=False),
+                                file_name="batch_predictions.csv",
+                                mime="text/csv"
+                            )
+                        else:
+                            st.error(f"Error: {result.get('error', 'Unknown error')}")
+            except Exception as e:
+                st.error(f"Error processing file: {str(e)}")
+                return
+
+    # Environmental data (only show if not in batch mode)
+    if mode != "Batch Prediction from CSV/Excel":
+        st.markdown("## Environmental Conditions")
+        col1, col2 = st.columns(2)
+        with col1:
+            temp = st.slider("Temperature (°C)", 20.0, 35.0, 25.0)
+        with col2:
+            hum = st.slider("Humidity (%)", 30.0, 80.0, 50.0)
+
+        # Predict button
+        if st.button("Predict Maturity", type="primary"):
+            data = {
+                "R": r, "G": g, "B": b,
+                "temperature": temp,
+                "humidity": hum
+            }
+            try:
+                with st.spinner("Analyzing..."):
+                    response = requests.post("http://localhost:8000/predict", json=data)
+                    result = response.json()
+
+                if "prediction" in result:
+                    prediction = result["prediction"]
+                    st.success(f"Prediction: **{prediction}**")
+
+                    entry = {
+                        "R": r, "G": g, "B": b,
+                        "Temp": temp, "Humidity": hum,
+                        "Prediction": prediction
+                    }
+                    st.session_state.history.append(entry)
+                    pd.DataFrame(st.session_state.history).to_csv(HISTORY_FILE, index=False)
+                else:
+                    st.error(f"Error: {result.get('error', 'Unknown error')}")
+            except Exception as e:
+                st.error(f"Connection failed: {str(e)}")
 
     # History section
     if st.session_state.history:
@@ -257,6 +361,7 @@ def main():
             mime="text/csv",
             use_container_width=True
         )
+
 
 if __name__ == "__main__":
     # Start FastAPI in a separate thread
