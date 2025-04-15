@@ -51,7 +51,7 @@ async def predict(request: Request):
 
 def run_fastapi():
     nest_asyncio.apply()
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8001)
 
 
 # --- Streamlit Frontend ---
@@ -212,7 +212,7 @@ def main():
         }
         try:
             with st.spinner("Analyzing..."):
-                response = requests.post("http://localhost:8000/predict", json=data)
+                response = requests.post("http://localhost:8001/predict", json=data)
                 result = response.json()
 
             if "prediction" in result:
