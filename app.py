@@ -52,27 +52,40 @@ async def predict(request: Request):
 @app.post("/predict_batch")
 async def predict_batch(request: Request):
     try:
-        # Get the file from the request
         data = await request.json()
-        records = data["records"]
+        records = data.get("records", [])
+
+        if not records:
+            return {"error": "No records provided"}
 
         predictions = []
         for record in records:
-            r = float(record["R"])
-            g = float(record["G"])
-            b = float(record["B"])
-            temp = float(record["temperature"])
-            hum = float(record["humidity"])
+            try:
+                # Convert all values to float
+                r = float(record.get("R", record.get("r", 0)))
+                g = float(record.get("G", record.get("g", 0)))
+                b = float(record.get("B", record.get("b", 0)))
+                temp = float(record.get("temperature", record.get("Temperature", 0)))
+                hum = float(record.get("humidity", record.get("Humidity", 0)))
 
-            features = np.array([[r, g, b, temp, hum]])
-            prediction = model.predict(features)
-            result = "Mature" if prediction[0] == 1 else "Immature"
-            record["Prediction"] = result
-            predictions.append(record)
+                features = np.array([[r, g, b, temp, hum]])
+                prediction = model.predict(features)
+                result = "Mature" if prediction[0] == 1 else "Immature"
+
+                # Return all original fields plus prediction
+                output_record = record.copy()
+                output_record["Prediction"] = result
+                predictions.append(output_record)
+            except Exception as e:
+                predictions.append({
+                    **record,
+                    "error": str(e),
+                    "Prediction": "Error"
+                })
 
         return {"predictions": predictions}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": f"Server error: {str(e)}"}
 
 
 def run_fastapi():
@@ -238,65 +251,93 @@ def main():
 
         if batch_file is not None:
             try:
+                # Read file
                 if batch_file.name.endswith('.csv'):
                     df = pd.read_csv(batch_file)
                 else:
                     df = pd.read_excel(batch_file)
 
+                # Standardize column names
+                df.columns = df.columns.str.strip().str.lower()
+
                 # Show preview
                 st.markdown("### File Preview")
                 st.dataframe(df.head())
 
-                # Check required columns
-                required_cols = {'R', 'G', 'B', 'temperature', 'humidity'}
-                if not required_cols.issubset(df.columns):
-                    st.error(f"File must contain these columns: {', '.join(required_cols)}")
+                # Check required columns (case-insensitive)
+                required_cols = {'r', 'g', 'b', 'temperature', 'humidity'}
+                file_cols = set(df.columns.str.lower())
+
+                if not required_cols.issubset(file_cols):
+                    missing = required_cols - file_cols
+                    st.error(f"Missing columns: {', '.join(missing)}")
                 else:
                     if st.button("Process Batch File", type="primary"):
+                        # Convert to correct data types
+                        df = df.astype({
+                            'r': float,
+                            'g': float,
+                            'b': float,
+                            'temperature': float,
+                            'humidity': float
+                        })
+
                         # Prepare data for API
-                        records = df[['R', 'G', 'B', 'temperature', 'humidity']].to_dict('records')
+                        records = df[['r', 'g', 'b', 'temperature', 'humidity']].to_dict('records')
 
-                        with st.spinner("Processing batch predictions..."):
-                            response = requests.post(
-                                "http://localhost:8000/predict_batch",
-                                json={"records": records}
-                            )
-                            result = response.json()
+                        try:
+                            with st.spinner("Processing batch predictions..."):
+                                response = requests.post(
+                                    "http://localhost:8000/predict_batch",
+                                    json={"records": records},
+                                    timeout=10
+                                )
 
-                        if "predictions" in result:
-                            result_df = pd.DataFrame(result["predictions"])
+                                # Debug: Show raw response
+                                st.write("API Response:", response.text)
 
-                            # Add to history
-                            for _, row in result_df.iterrows():
-                                entry = {
-                                    "R": row['R'],
-                                    "G": row['G'],
-                                    "B": row['B'],
-                                    "Temp": row['temperature'],
-                                    "Humidity": row['humidity'],
-                                    "Prediction": row['Prediction']
-                                }
-                                st.session_state.history.append(entry)
+                                response.raise_for_status()  # Raises exception for 4XX/5XX
+                                result = response.json()
 
-                            # Save history
-                            pd.DataFrame(st.session_state.history).to_csv(HISTORY_FILE, index=False)
+                            if "predictions" in result:
+                                result_df = pd.DataFrame(result["predictions"])
 
-                            # Show results
-                            st.success(f"Processed {len(result_df)} predictions successfully!")
-                            st.dataframe(result_df)
+                                # Add to history
+                                for _, row in result_df.iterrows():
+                                    entry = {
+                                        "R": row.get('R', row.get('r')),
+                                        "G": row.get('G', row.get('g')),
+                                        "B": row.get('B', row.get('b')),
+                                        "Temp": row.get('temperature', row.get('Temperature')),
+                                        "Humidity": row.get('humidity', row.get('Humidity')),
+                                        "Prediction": row['Prediction']
+                                    }
+                                    st.session_state.history.append(entry)
 
-                            # Download button
-                            st.download_button(
-                                label="Download Predictions as CSV",
-                                data=result_df.to_csv(index=False),
-                                file_name="batch_predictions.csv",
-                                mime="text/csv"
-                            )
-                        else:
-                            st.error(f"Error: {result.get('error', 'Unknown error')}")
+                                # Save history
+                                pd.DataFrame(st.session_state.history).to_csv(HISTORY_FILE, index=False)
+
+                                # Show results
+                                st.success(f"Processed {len(result_df)} predictions successfully!")
+                                st.dataframe(result_df)
+
+                                # Download button
+                                st.download_button(
+                                    label="Download Predictions as CSV",
+                                    data=result_df.to_csv(index=False),
+                                    file_name="batch_predictions.csv",
+                                    mime="text/csv"
+                                )
+                            else:
+                                st.error(f"API Error: {result.get('error', 'No predictions returned')}")
+                        except requests.exceptions.RequestException as e:
+                            st.error(f"API Connection Failed: {str(e)}")
+                        except ValueError as e:
+                            st.error(f"Invalid API Response: {str(e)}")
+                        except Exception as e:
+                            st.error(f"Unexpected Error: {str(e)}")
             except Exception as e:
-                st.error(f"Error processing file: {str(e)}")
-                return
+                st.error(f"File Processing Error: {str(e)}")
 
     # Environmental data (only show if not in batch mode)
     if mode != "Batch Prediction from CSV/Excel":
