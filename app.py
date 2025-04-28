@@ -162,6 +162,16 @@ def main():
                 border-bottom: 3px solid #1a56db;
                 font-weight: 600;
             }
+
+            /* Additions for Manual RGB Entry and Upload Image for RGB */
+            label[data-baseweb="radio"] span {
+                color: black !important; /* Ensure radio button labels are black */
+            }
+
+            /* Ensure chat response text is black */
+            [data-testid="stChatMessage"] p {
+                color: black !important; /* Set chat response text color to black */
+            }
         </style>
     """, unsafe_allow_html=True)
 
