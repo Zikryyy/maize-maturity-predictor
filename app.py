@@ -162,6 +162,16 @@ def main():
                 border-bottom: 3px solid #1a56db;
                 font-weight: 600;
             }
+
+            /* Radio button labels color */
+            .stRadio [role="radiogroup"] label {
+                color: black !important;
+            }
+
+            /* Chat message text color */
+            .stChatMessage [data-testid="stMarkdownContainer"] p {
+                color: black !important;
+            }
         </style>
     """, unsafe_allow_html=True)
 
@@ -286,7 +296,7 @@ def main():
 
     with tab2:
         # --- Chatbot UI ---
-        st.markdown("#  Maize Assistant")
+        st.markdown("# Maize Assistant")
         st.caption("Ask me about maize maturity prediction")
 
         # Display chat history
