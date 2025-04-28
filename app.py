@@ -286,7 +286,7 @@ def main():
 
     with tab2:
         # --- Chatbot UI ---
-        st.markdown("# 💬 Maize Assistant")
+        st.markdown("#  Maize Assistant")
         st.caption("Ask me about maize maturity prediction")
 
         # Display chat history
