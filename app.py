@@ -118,6 +118,11 @@ def main():
                 font-weight: 700;
             }
 
+            /* Radio Button Labels */
+            label[data-baseweb="radio"] span {
+                color: black !important;
+            }
+
             /* Chat-specific styles */
             .stChatInput textarea {
                 background-color: #f0f4f8 !important;
@@ -138,7 +143,7 @@ def main():
 
             /* Ensure chat response text is black */
             [data-testid="stChatMessage"] * {
-                color: black !important; /* Ensure all text inside the chat message is black */
+                color: black !important;
             }
 
             /* Prediction card styles */
@@ -166,11 +171,6 @@ def main():
                 color: #1a56db;
                 border-bottom: 3px solid #1a56db;
                 font-weight: 600;
-            }
-
-            /* Additions for Manual RGB Entry and Upload Image for RGB */
-            label[data-baseweb="radio"] span {
-                color: black !important; /* Ensure radio button labels are black */
             }
         </style>
     """, unsafe_allow_html=True)
