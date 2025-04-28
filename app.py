@@ -163,14 +163,14 @@ def main():
                 font-weight: 600;
             }
 
-            /* Radio button labels color */
-            .stRadio [role="radiogroup"] label {
-                color: black !important;
+            /* Additions for Manual RGB Entry and Upload Image for RGB */
+            label[data-baseweb="radio"] span {
+                color: black !important; /* Ensure radio button labels are black */
             }
 
-            /* Chat message text color */
-            .stChatMessage [data-testid="stMarkdownContainer"] p {
-                color: black !important;
+            /* Ensure chat response text is black */
+            [data-testid="stChatMessage"] p {
+                color: black !important; /* Set chat response text color to black */
             }
         </style>
     """, unsafe_allow_html=True)
