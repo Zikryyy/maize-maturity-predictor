@@ -119,7 +119,7 @@ def main():
             }
 
             /* Radio Button Labels */
-            label[data-baseweb="radio"] span {
+            [data-baseweb="radio"] {
                 color: black !important; /* Ensure radio button labels are black */
             }
 
