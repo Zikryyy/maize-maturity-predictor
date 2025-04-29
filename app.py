@@ -176,6 +176,29 @@ def main():
                 border-bottom: 3px solid #1a56db;
                 font-weight: 600;
             }
+
+            /* Style for input method buttons */
+            .input-method-btn {
+                background-color: #f3f4f6;
+                border: 1px solid #d1d5db;
+                padding: 8px 16px;
+                text-align: center;
+                border-radius: 6px;
+                cursor: pointer;
+                transition: all 0.2s;
+                font-weight: 500;
+                color: #1f2937;
+            }
+
+            .input-method-btn.active {
+                background-color: #1a56db;
+                color: white !important;
+                border-color: #1a56db;
+            }
+
+            .input-method-btn:hover:not(.active) {
+                background-color: #e5e7eb;
+            }
         </style>
     """, unsafe_allow_html=True)
 
@@ -187,6 +210,10 @@ def main():
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
+    # Initialize input mode session state
+    if "input_mode" not in st.session_state:
+        st.session_state.input_mode = "Manual RGB Entry"
+
     # Main tabs
     tab1, tab2 = st.tabs(["🌽 Maize Predictor", "💬 Chat Assistant"])
 
@@ -197,37 +224,33 @@ def main():
         # Input mode selector
         st.markdown("## Input Method")
 
-        # Use columns for better control of the radio button layout
+        # Create radio buttons with proper styling using custom components
         col1, col2 = st.columns(2)
+
+        def handle_manual_click():
+            st.session_state.input_mode = "Manual RGB Entry"
+
+        def handle_upload_click():
+            st.session_state.input_mode = "Upload Image for RGB"
+
         with col1:
-            manual_selected = st.checkbox("Manual RGB Entry", value=True, key="manual_checkbox")
+            if st.button("Manual RGB Entry",
+                         key="manual_btn",
+                         use_container_width=True,
+                         type="primary" if st.session_state.input_mode == "Manual RGB Entry" else "secondary"):
+                handle_manual_click()
+                st.rerun()
+
         with col2:
-            upload_selected = st.checkbox("Upload Image for RGB", value=False, key="upload_checkbox")
+            if st.button("Upload Image for RGB",
+                         key="upload_btn",
+                         use_container_width=True,
+                         type="primary" if st.session_state.input_mode == "Upload Image for RGB" else "secondary"):
+                handle_upload_click()
+                st.rerun()
 
-        # Ensure only one option is selected
-        if manual_selected and upload_selected:
-            if "last_selected" not in st.session_state:
-                st.session_state.last_selected = "manual"
-
-            if st.session_state.last_selected == "manual":
-                upload_selected = False
-                st.session_state.upload_checkbox = False
-            else:
-                manual_selected = False
-                st.session_state.manual_checkbox = False
-
-        if manual_selected:
-            st.session_state.last_selected = "manual"
-            mode = "Manual RGB Entry"
-        elif upload_selected:
-            st.session_state.last_selected = "upload"
-            mode = "Upload Image for RGB"
-        else:
-            # Default to manual if nothing is selected
-            mode = "Manual RGB Entry"
-            manual_selected = True
-            st.session_state.manual_checkbox = True
-            st.session_state.last_selected = "manual"
+        # Set the mode based on session state
+        mode = st.session_state.input_mode
 
         # RGB input handling
         if mode == "Manual RGB Entry":
