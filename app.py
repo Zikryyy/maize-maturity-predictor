@@ -120,6 +120,11 @@ def main():
 
             /* Radio Button Labels */
             label[data-baseweb="radio"] span {
+                color: black !important; /* Ensure radio button labels are black */
+            }
+
+            /* Fallback: Target all labels directly */
+            label {
                 color: black !important;
             }
 
