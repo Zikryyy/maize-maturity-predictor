@@ -118,29 +118,17 @@ def main():
                 font-weight: 700;
             }
 
-            /* Radio Button Labels - Updated for better specificity */
-            [data-baseweb="radio"] {
-                color: black !important; /* Ensure radio button labels are black */
-            }
-
-            /* More specific selectors to ensure radio button text is visible */
-            [data-testid="stRadio"] label {
-                color: black !important;
-                font-weight: 500;
-            }
-
-            /* Target specifically the text inside radio buttons */
-            [data-testid="stRadio"] [data-baseweb="radio"] label div {
+            /* Force ALL text to be black (aggressive approach) */
+            * {
                 color: black !important;
             }
 
-            /* Even more specific selector for the label text */
-            div[role="radiogroup"] label span {
+            /* Radio Button Labels */
+            .st-bq {
                 color: black !important;
             }
 
-            /* Fallback: Target all labels directly */
-            label {
+            div[role="radiogroup"] * {
                 color: black !important;
             }
 
@@ -160,11 +148,6 @@ def main():
             [data-testid="stChatMessage"] > div:first-child {
                 background-color: #f0f4f8 !important;
                 border-left: 4px solid #1a56db !important;
-            }
-
-            /* Ensure chat response text is black */
-            [data-testid="stChatMessage"] * {
-                color: black !important;
             }
 
             /* Prediction card styles */
@@ -213,8 +196,38 @@ def main():
 
         # Input mode selector
         st.markdown("## Input Method")
-        mode = st.radio("", ["Manual RGB Entry", "Upload Image for RGB"],
-                        horizontal=True, label_visibility="collapsed", key="mode_selector")
+
+        # Use columns for better control of the radio button layout
+        col1, col2 = st.columns(2)
+        with col1:
+            manual_selected = st.checkbox("Manual RGB Entry", value=True, key="manual_checkbox")
+        with col2:
+            upload_selected = st.checkbox("Upload Image for RGB", value=False, key="upload_checkbox")
+
+        # Ensure only one option is selected
+        if manual_selected and upload_selected:
+            if "last_selected" not in st.session_state:
+                st.session_state.last_selected = "manual"
+
+            if st.session_state.last_selected == "manual":
+                upload_selected = False
+                st.session_state.upload_checkbox = False
+            else:
+                manual_selected = False
+                st.session_state.manual_checkbox = False
+
+        if manual_selected:
+            st.session_state.last_selected = "manual"
+            mode = "Manual RGB Entry"
+        elif upload_selected:
+            st.session_state.last_selected = "upload"
+            mode = "Upload Image for RGB"
+        else:
+            # Default to manual if nothing is selected
+            mode = "Manual RGB Entry"
+            manual_selected = True
+            st.session_state.manual_checkbox = True
+            st.session_state.last_selected = "manual"
 
         # RGB input handling
         if mode == "Manual RGB Entry":
