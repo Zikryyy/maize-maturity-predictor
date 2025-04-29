@@ -118,9 +118,25 @@ def main():
                 font-weight: 700;
             }
 
-            /* Radio Button Labels */
+            /* Radio Button Labels - Updated for better specificity */
             [data-baseweb="radio"] {
                 color: black !important; /* Ensure radio button labels are black */
+            }
+
+            /* More specific selectors to ensure radio button text is visible */
+            [data-testid="stRadio"] label {
+                color: black !important;
+                font-weight: 500;
+            }
+
+            /* Target specifically the text inside radio buttons */
+            [data-testid="stRadio"] [data-baseweb="radio"] label div {
+                color: black !important;
+            }
+
+            /* Even more specific selector for the label text */
+            div[role="radiogroup"] label span {
+                color: black !important;
             }
 
             /* Fallback: Target all labels directly */
