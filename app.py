@@ -99,105 +99,193 @@ def main():
         initial_sidebar_state="collapsed"
     )
 
-    # Custom CSS for both components
+    # Custom CSS for modern minimalist design
     st.markdown("""
         <style>
+            /* Import modern font */
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
             /* Base styles */
             body, .stApp {
-                font-family: 'Arial', sans-serif;
-                background-color: white !important;
-                color: black !important;
+                font-family: 'Inter', sans-serif !important;
+                background-color: #F9FAFB !important;
+                color: #1F2A44 !important;
+            }
+
+            /* Container padding */
+            .stApp > div:first-child {
+                padding: 2rem;
+                max-width: 800px;
+                margin: 0 auto;
             }
 
             /* Title styles */
             h1 {
-                color: #1a56db !important;
+                color: #3B82F6 !important;
                 text-align: center;
-                margin-bottom: 1.5rem;
-                font-size: 2rem;
-                font-weight: 700;
+                font-size: 2.25rem !important;
+                font-weight: 700 !important;
+                margin-bottom: 2rem !important;
             }
 
-            /* Force ALL text to be black (aggressive approach) */
+            h2 {
+                color: #1F2A44 !important;
+                font-size: 1.5rem !important;
+                font-weight: 600 !important;
+                margin-bottom: 1rem !important;
+            }
+
+            /* Force text color */
             * {
-                color: black !important;
+                color: #1F2A44 !important;
             }
 
-            /* Radio Button Labels */
-            .st-bq {
-                color: black !important;
+            /* Radio button labels */
+            .st-bq, div[role="radiogroup"] * {
+                color: #1F2A44 !important;
             }
 
-            div[role="radiogroup"] * {
-                color: black !important;
+            /* Input fields */
+            .stNumberInput input, .stSlider div[role="slider"] {
+                background-color: #FFFFFF !important;
+                border: 1px solid #E5E7EB !important;
+                border-radius: 8px !important;
+                padding: 0.5rem !important;
+                transition: border-color 0.2s ease !important;
+            }
+
+            .stNumberInput input:focus, .stSlider div[role="slider"]:focus {
+                border-color: #3B82F6 !important;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+            }
+
+            /* Buttons */
+            .stButton button {
+                background-color: #3B82F6 !important;
+                color: #FFFFFF !important;
+                border: none !important;
+                border-radius: 8px !important;
+                padding: 0.75rem 1.5rem !important;
+                font-weight: 500 !important;
+                transition: background-color 0.2s ease, transform 0.1s ease !important;
+            }
+
+            .stButton button:hover {
+                background-color: #2563EB !important;
+                transform: translateY(-1px) !important;
+            }
+
+            .stButton button:active {
+                transform: translateY(0) !important;
+            }
+
+            .stButton button[kind="secondary"] {
+                background-color: #FFFFFF !important;
+                color: #3B82F6 !important;
+                border: 1px solid #E5E7EB !important;
+            }
+
+            .stButton button[kind="secondary"]:hover {
+                background-color: #F3F4F6 !important;
+                border-color: #3B82F6 !important;
+            }
+
+            /* File uploader */
+            .stFileUploader {
+                background-color: #FFFFFF !important;
+                border: 1px solid #E5E7EB !important;
+                border-radius: 8px !important;
+                padding: 1rem !important;
             }
 
             /* Chat-specific styles */
             .stChatInput textarea {
-                background-color: #f0f4f8 !important;
-                border: 1px solid #1a56db !important;
+                background-color: #FFFFFF !important;
+                border: 1px solid #E5E7EB !important;
+                border-radius: 8px !important;
+                padding: 0.75rem !important;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+            }
+
+            .stChatInput textarea:focus {
+                border-color: #3B82F6 !important;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
             }
 
             .stChatMessage {
-                border-radius: 12px;
-                padding: 1rem;
-                margin: 0.5rem 0;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                border-radius: 8px !important;
+                padding: 1rem !important;
+                margin: 0.5rem 0 !important;
+                background-color: #FFFFFF !important;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
             }
 
             [data-testid="stChatMessage"] > div:first-child {
-                background-color: #f0f4f8 !important;
-                border-left: 4px solid #1a56db !important;
+                background-color: #F3F4F6 !important;
+                border-left: 3px solid #3B82F6 !important;
             }
 
             /* Prediction card styles */
             .history-card {
-                padding: 1rem;
-                margin-bottom: 1rem;
-                border-radius: 8px;
-                background-color: #ffffff;
-                border: 1px solid #e2e8f0;
-                border-left: 4px solid #2563eb;
+                padding: 1rem !important;
+                margin-bottom: 1rem !important;
+                border-radius: 8px !important;
+                background-color: #FFFFFF !important;
+                border: 1px solid #E5E7EB !important;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
             }
 
             /* Tab styling */
             .stTabs [role="tablist"] {
-                justify-content: center;
+                justify-content: center !important;
+                border-bottom: 1px solid #E5E7EB !important;
+                margin-bottom: 2rem !important;
             }
 
             .stTabs [role="tab"] {
-                padding: 0.5rem 1.5rem;
-                border-bottom: 3px solid transparent;
-                transition: all 0.3s;
+                padding: 0.75rem 1.5rem !important;
+                font-weight: 500 !important;
+                color: #6B7280 !important;
+                transition: color 0.2s ease, border-color 0.2s ease !important;
             }
 
             .stTabs [aria-selected="true"] {
-                color: #1a56db;
-                border-bottom: 3px solid #1a56db;
-                font-weight: 600;
+                color: #3B82F6 !important;
+                border-bottom: 2px solid #3B82F6 !important;
             }
 
-            /* Style for input method buttons */
-            .input-method-btn {
-                background-color: #f3f4f6;
-                border: 1px solid #d1d5db;
-                padding: 8px 16px;
-                text-align: center;
-                border-radius: 6px;
-                cursor: pointer;
-                transition: all 0.2s;
-                font-weight: 500;
-                color: #1f2937;
+            .stTabs [role="tab"]:hover {
+                color: #3B82F6 !important;
             }
 
-            .input-method-btn.active {
-                background-color: #1a56db;
-                color: white !important;
-                border-color: #1a56db;
+            /* Download button */
+            .stDownloadButton button {
+                background-color: #FFFFFF !important;
+                color: #3B82F6 !important;
+                border: 1px solid #E5E7EB !important;
+                border-radius: 8px !important;
+                padding: 0.75rem 1.5rem !important;
+                font-weight: 500 !important;
             }
 
-            .input-method-btn:hover:not(.active) {
-                background-color: #e5e7eb;
+            .stDownloadButton button:hover {
+                background-color: #F3F4F6 !important;
+                border-color: #3B82F6 !important;
+            }
+
+            /* Spinner */
+            .stSpinner {
+                color: #3B82F6 !important;
+            }
+
+            /* Remove default Streamlit decorations */
+            [data-testid="stDecoration"] {
+                display: none !important;
+            }
+
+            /* Ensure consistent column spacing */
+            .stColumn > div {
+                padding: 0 0.5rem !important;
             }
         </style>
     """, unsafe_allow_html=True)
@@ -332,7 +420,7 @@ def main():
                 with st.container():
                     st.markdown(f"""
                     <div class="history-card">
-                        <div style='font-weight: 600; color: #1e40af;'>Prediction #{i}</div>
+                        <div style='font-weight: 600; color: #3B82F6;'>Prediction #{i}</div>
                         <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;'>
                             <div><b>RGB:</b> {entry['R']}, {entry['G']}, {entry['B']}</div>
                             <div><b>Temp:</b> {entry['Temp']}°C</div>
