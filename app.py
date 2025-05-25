@@ -56,7 +56,7 @@ def run_fastapi():
 
 # --- Chatbot Configuration ---
 CHATBOT_RESPONSES = {
-    "hello": "Hi there! I'm your Maize Maturity Assistant. How can I help you today?",
+    "hello": "Hi there! I'm your MaizeMaturity Assistant. How can I help you today?",
     "hi": "Hello! Ready to predict maize maturity? Try asking about 'how to use' or 'what is this'.",
     "help": "Here's what I can help with:\n\n"
             "• How to use the predictor\n"
@@ -67,13 +67,13 @@ CHATBOT_RESPONSES = {
             "• Prediction accuracy\n"
             "• Model information\n"
             "• Troubleshooting errors",
-    "how to use": "To use the Maize Maturity Predictor:\n\n"
+    "how to use": "To use MaizeMaturity:\n\n"
                   "1. Select an input method (Manual RGB or Upload Image)\n"
                   "2. Enter RGB values or upload a clear image of the maize\n"
                   "3. Set temperature (20-35°C) and humidity (30-80%)\n"
                   "4. Click 'Predict Maturity' to see the result\n"
                   "5. Check prediction history for past results",
-    "what is this": "This app predicts maize maturity using:\n\n"
+    "what is this": "MaizeMaturity predicts maize maturity using:\n\n"
                     "• Plant color (RGB values from manual entry or image)\n"
                     "• Temperature (optimal: 20-35°C)\n"
                     "• Humidity (optimal: 30-80%)\n\n"
@@ -132,12 +132,12 @@ CHATBOT_RESPONSES = {
 # --- Streamlit Frontend ---
 def main():
     st.set_page_config(
-        page_title="Blue Maize Maturity Predictor",
+        page_title="MaizeMaturity",
         layout="centered",
         initial_sidebar_state="collapsed"
     )
 
-    # Custom CSS for modern minimalist design
+    # Custom CSS for professional design with gradient animation
     st.markdown("""
         <style>
             /* Import modern font */
@@ -146,8 +146,8 @@ def main():
             /* Base styles */
             body, .stApp {
                 font-family: 'Inter', sans-serif !important;
-                background-color: #F9FAFB !important;
-                color: #1F2A44 !important;
+                background-color: #F8FAFC !important;
+                color: #1F2937 !important;
             }
 
             /* Container padding */
@@ -157,17 +157,27 @@ def main():
                 margin: 0 auto;
             }
 
-            /* Title styles */
+            /* Title styles with gradient animation */
             h1 {
-                color: #3B82F6 !important;
                 text-align: center;
                 font-size: 2.25rem !important;
                 font-weight: 700 !important;
                 margin-bottom: 2rem !important;
+                background: linear-gradient(90deg, #1E3A8A, #2DD4BF, #1E3A8A);
+                background-size: 200% 100%;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                animation: gradientFlow 5s ease-in-out infinite;
+            }
+
+            @keyframes gradientFlow {
+                0% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
             }
 
             h2 {
-                color: #1F2A44 !important;
+                color: #1F2937 !important;
                 font-size: 1.5rem !important;
                 font-weight: 600 !important;
                 margin-bottom: 1rem !important;
@@ -176,7 +186,7 @@ def main():
             /* Instruction box */
             .instruction-box {
                 background-color: #FFFFFF !important;
-                border: 1px solid #E5E7EB !important;
+                border: 1px solid #D1D5DB !important;
                 border-radius: 8px !important;
                 padding: 1rem !important;
                 margin-bottom: 2rem !important;
@@ -185,31 +195,31 @@ def main():
 
             /* Force text color */
             * {
-                color: #1F2A44 !important;
+                color: #1F2937 !important;
             }
 
             /* Radio button labels */
             .st-bq, div[role="radiogroup"] * {
-                color: #1F2A44 !important;
+                color: #1F2937 !important;
             }
 
             /* Input fields */
             .stNumberInput input, .stSlider div[role="slider"] {
                 background-color: #FFFFFF !important;
-                border: 1px solid #E5E7EB !important;
+                border: 1px solid #D1D5DB !important;
                 border-radius: 8px !important;
                 padding: 0.5rem !important;
                 transition: border-color 0.2s ease !important;
             }
 
             .stNumberInput input:focus, .stSlider div[role="slider"]:focus {
-                border-color: #3B82F6 !important;
-                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+                border-color: #1E3A8A !important;
+                box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1) !important;
             }
 
             /* Buttons */
             .stButton button {
-                background-color: #3B82F6 !important;
+                background-color: #1E3A8A !important;
                 color: #FFFFFF !important;
                 border: none !important;
                 border-radius: 8px !important;
@@ -219,7 +229,7 @@ def main():
             }
 
             .stButton button:hover {
-                background-color: #2563EB !important;
+                background-color: #3B82F6 !important;
                 transform: translateY(-1px) !important;
             }
 
@@ -229,19 +239,19 @@ def main():
 
             .stButton button[kind="secondary"] {
                 background-color: #FFFFFF !important;
-                color: #3B82F6 !important;
-                border: 1px solid #E5E7EB !important;
+                color: #2DD4BF !important;
+                border: 1px solid #D1D5DB !important;
             }
 
             .stButton button[kind="secondary"]:hover {
-                background-color: #F3F4F6 !important;
-                border-color: #3B82F6 !important;
+                background-color: #F8FAFC !important;
+                border-color: #2DD4BF !important;
             }
 
             /* File uploader */
             .stFileUploader {
                 background-color: #FFFFFF !important;
-                border: 1px solid #E5E7EB !important;
+                border: 1px solid #D1D5DB !important;
                 border-radius: 8px !important;
                 padding: 1rem !important;
             }
@@ -249,15 +259,15 @@ def main():
             /* Chat-specific styles */
             .stChatInput textarea {
                 background-color: #FFFFFF !important;
-                border: 1px solid #E5E7EB !important;
+                border: 1px solid #D1D5DB !important;
                 border-radius: 8px !important;
                 padding: 0.75rem !important;
                 box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
             }
 
             .stChatInput textarea:focus {
-                border-color: #3B82F6 !important;
-                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+                border-color: #1E3A8A !important;
+                box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1) !important;
             }
 
             .stChatMessage {
@@ -269,8 +279,8 @@ def main():
             }
 
             [data-testid="stChatMessage"] > div:first-child {
-                background-color: #F3F4F6 !important;
-                border-left: 3px solid #3B82F6 !important;
+                background-color: #F8FAFC !important;
+                border-left: 3px solid #2DD4BF !important;
             }
 
             /* Prediction card styles */
@@ -279,14 +289,14 @@ def main():
                 margin-bottom: 1rem !important;
                 border-radius: 8px !important;
                 background-color: #FFFFFF !important;
-                border: 1px solid #E5E7EB !important;
+                border: 1px solid #D1D5DB !important;
                 box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
             }
 
             /* Tab styling */
             .stTabs [role="tablist"] {
                 justify-content: center !important;
-                border-bottom: 1px solid #E5E7EB !important;
+                border-bottom: 1px solid #D1D5DB !important;
                 margin-bottom: 2rem !important;
             }
 
@@ -298,32 +308,43 @@ def main():
             }
 
             .stTabs [aria-selected="true"] {
-                color: #3B82F6 !important;
-                border-bottom: 2px solid #3B82F6 !important;
+                color: #1E3A8A !important;
+                border-bottom: 2px solid #1E3A8A !important;
             }
 
             .stTabs [role="tab"]:hover {
-                color: #3B82F6 !important;
+                color: #1E3A8A !important;
             }
 
             /* Download button */
             .stDownloadButton button {
                 background-color: #FFFFFF !important;
-                color: #3B82F6 !important;
-                border: 1px solid #E5E7EB !important;
+                color: #2DD4BF !important;
+                border: 1px solid #D1D5DB !important;
                 border-radius: 8px !important;
                 padding: 0.75rem 1.5rem !important;
                 font-weight: 500 !important;
             }
 
             .stDownloadButton button:hover {
-                background-color: #F3F4F6 !important;
-                border-color: #3B82F6 !important;
+                background-color: #F8FAFC !important;
+                border-color: #2DD4BF !important;
+            }
+
+            /* Success and error messages */
+            .stSuccess {
+                background-color: #10B981 !important;
+                color: #FFFFFF !important;
+            }
+
+            .stError {
+                background-color: #EF4444 !important;
+                color: #FFFFFF !important;
             }
 
             /* Spinner */
             .stSpinner {
-                color: #3B82F6 !important;
+                color: #1E3A8A !important;
             }
 
             /* Remove default Streamlit decorations */
@@ -355,13 +376,13 @@ def main():
 
     with tab1:
         # --- Prediction UI with Instructions ---
-        st.markdown("# Blue Maize Maturity Predictor")
+        st.markdown("# MaizeMaturity")
 
         # Instructions for users
         st.markdown("""
         <div class="instruction-box">
-            <h3 style="color: #1F2A44; font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">How to Use This App</h3>
-            <p style="color: #1F2A44;">
+            <h3 style="color: #1F2937; font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">How to Use MaizeMaturity</h3>
+            <p style="color: #1F2937;">
                 1. Choose how to input maize color: enter RGB values manually or upload an image.<br>
                 2. Adjust temperature (20-35°C) and humidity (30-80%) sliders.<br>
                 3. Click "Predict Maturity" to get the result.<br>
@@ -434,7 +455,7 @@ def main():
                 fig, axs = plt.subplots(1, 3, figsize=(12, 3))
                 for i, ax in enumerate(axs):
                     ax.imshow(img_np[:, :, i], cmap='Reds' if i == 0 else 'Greens' if i == 1 else 'Blues')
-                    ax.set_title(['Red', 'Green', 'Blue'][i], color='#1e40af', fontsize=12)
+                    ax.set_title(['Red', 'Green', 'Blue'][i], color='#1E3A8A', fontsize=12)
                     ax.axis("off")
                 plt.tight_layout()
                 st.pyplot(fig)
@@ -483,7 +504,7 @@ def main():
                 with st.container():
                     st.markdown(f"""
                     <div class="history-card">
-                        <div style='font-weight: 600; color: #3B82F6;'>Prediction #{i}</div>
+                        <div style='font-weight: 600; color: #1E3A8A;'>Prediction #{i}</div>
                         <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;'>
                             <div><b>RGB:</b> {entry['R']}, {entry['G']}, {entry['B']}</div>
                             <div><b>Temp:</b> {entry['Temp']}°C</div>
@@ -504,7 +525,7 @@ def main():
 
     with tab2:
         # --- Chatbot UI ---
-        st.markdown("# Maize Assistant")
+        st.markdown("# MaizeMaturity Assistant")
         st.caption("Ask me about maize maturity prediction or troubleshooting")
 
         # Display chat history
