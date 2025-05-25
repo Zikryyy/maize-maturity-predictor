@@ -56,38 +56,76 @@ def run_fastapi():
 
 # --- Chatbot Configuration ---
 CHATBOT_RESPONSES = {
-    "hello": "Hi there! I'm your Maize Maturity Assistant. How can I help?",
-    "hi": "Hello! Ready to predict maize maturity?",
+    "hello": "Hi there! I'm your Maize Maturity Assistant. How can I help you today?",
+    "hi": "Hello! Ready to predict maize maturity? Try asking about 'how to use' or 'what is this'.",
     "help": "Here's what I can help with:\n\n"
             "• How to use the predictor\n"
             "• Understanding RGB values\n"
             "• Optimal temperature/humidity\n"
-            "• Interpreting results",
-    "how to use": "1. Choose input method (Manual or Image)\n"
-                  "2. Set environmental conditions\n"
-                  "3. Click 'Predict Maturity'",
+            "• Interpreting results\n"
+            "• Image upload tips\n"
+            "• Prediction accuracy\n"
+            "• Model information\n"
+            "• Troubleshooting errors",
+    "how to use": "To use the Maize Maturity Predictor:\n\n"
+                  "1. Select an input method (Manual RGB or Upload Image)\n"
+                  "2. Enter RGB values or upload a clear image of the maize\n"
+                  "3. Set temperature (20-35°C) and humidity (30-80%)\n"
+                  "4. Click 'Predict Maturity' to see the result\n"
+                  "5. Check prediction history for past results",
     "what is this": "This app predicts maize maturity using:\n\n"
-                    "- Plant color (RGB values)\n"
-                    "- Temperature (20-35°C optimal)\n"
-                    "- Humidity (30-80% optimal)",
+                    "• Plant color (RGB values from manual entry or image)\n"
+                    "• Temperature (optimal: 20-35°C)\n"
+                    "• Humidity (optimal: 30-80%)\n\n"
+                    "It uses a machine learning model to determine if maize is Mature or Immature.",
     "temperature": "Optimal temperature range: 20-35°C\n\n"
-                   "Higher temps may indicate faster maturation",
+                   "• Higher temps (above 30°C) may speed up maturation\n"
+                   "• Lower temps (below 20°C) may slow it down",
     "humidity": "Ideal humidity levels: 30-80%\n\n"
-                "High humidity can affect disease risk",
+                "• High humidity (>80%) may increase disease risk\n"
+                "• Low humidity (<30%) can stress the plant",
     "rgb": "Typical mature maize RGB ranges:\n\n"
            "• Red: 29-35\n"
            "• Green: 35-51\n"
-           "• Blue: 51-60",
+           "• Blue: 51-60\n\n"
+           "These values reflect the color of mature maize kernels or leaves.",
     "history": "Your prediction history shows past analyses with:\n\n"
-               "- Input values\n"
-               "- Environmental conditions\n"
-               "- Maturity predictions",
+               "• RGB values\n"
+               "• Temperature and humidity\n"
+               "• Maturity predictions\n\n"
+               "You can download it as a CSV file.",
+    "image upload": "To upload an image:\n\n"
+                    "• Use a clear, well-lit photo of the maize (JPG, JPEG, or PNG)\n"
+                    "• Ensure the image is under 200MB\n"
+                    "• The app will extract average RGB values from the image",
+    "prediction accuracy": "The prediction is based on a Random Forest model trained on maize data. Accuracy depends on:\n\n"
+                          "• Quality of RGB input (clear images or accurate manual values)\n"
+                          "• Environmental conditions within optimal ranges\n"
+                          "• Model training data relevance\n\n"
+                          "For best results, use typical RGB ranges and realistic environmental data.",
+    "model info": "The model is a Random Forest classifier trained on:\n\n"
+                  "• RGB color values of maize\n"
+                  "• Temperature and humidity data\n\n"
+                  "It predicts whether maize is 'Mature' or 'Immature' based on these inputs.",
+    "error": "Common errors and fixes:\n\n"
+             "• 'Connection failed': Ensure the app is running and try again\n"
+             "• 'Invalid RGB': Use values between 0-255\n"
+             "• 'Image processing error': Upload a valid JPG, JPEG, or PNG under 200MB\n"
+             "• 'Model not loaded': Check if 'rf_model_maize_maturity.pkl' exists",
+    "clear history": "To clear prediction history:\n\n"
+                     "• The app doesn't support direct history clearing\n"
+                     "• You can manually delete 'prediction_history.csv' from your system\n"
+                     "• Restart the app to reset the history",
     "default": "I can help with:\n\n"
                "• 'how to use' the app\n"
                "• 'temperature' ranges\n"
                "• 'humidity' effects\n"
                "• 'rgb' value guidance\n"
-               "• 'history' explanation"
+               "• 'image upload' tips\n"
+               "• 'prediction accuracy' details\n"
+               "• 'model info' about the predictor\n"
+               "• 'history' explanation\n"
+               "• 'error' troubleshooting"
 }
 
 
@@ -133,6 +171,16 @@ def main():
                 font-size: 1.5rem !important;
                 font-weight: 600 !important;
                 margin-bottom: 1rem !important;
+            }
+
+            /* Instruction box */
+            .instruction-box {
+                background-color: #FFFFFF !important;
+                border: 1px solid #E5E7EB !important;
+                border-radius: 8px !important;
+                padding: 1rem !important;
+                margin-bottom: 2rem !important;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
             }
 
             /* Force text color */
@@ -306,8 +354,22 @@ def main():
     tab1, tab2 = st.tabs(["🌽 Maize Predictor", "💬 Chat Assistant"])
 
     with tab1:
-        # --- Original Prediction UI ---
+        # --- Prediction UI with Instructions ---
         st.markdown("# Blue Maize Maturity Predictor")
+
+        # Instructions for users
+        st.markdown("""
+        <div class="instruction-box">
+            <h3 style="color: #1F2A44; font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">How to Use This App</h3>
+            <p style="color: #1F2A44;">
+                1. Choose how to input maize color: enter RGB values manually or upload an image.<br>
+                2. Adjust temperature (20-35°C) and humidity (30-80%) sliders.<br>
+                3. Click "Predict Maturity" to get the result.<br>
+                4. View past predictions in the history section or ask the Chat Assistant for help.<br>
+                <i>Tip: For images, use clear, well-lit photos of maize for accurate RGB extraction.</i>
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
         # Input mode selector
         st.markdown("## Input Method")
@@ -344,15 +406,16 @@ def main():
         if mode == "Manual RGB Entry":
             col1, col2, col3 = st.columns(3)
             with col1:
-                r = st.number_input("Red (R)", min_value=0, max_value=255, value=100)
+                r = st.number_input("Red (R)", min_value=0, max_value=255, value=100, help="Enter value between 0-255. Typical for mature maize: 29-35")
             with col2:
-                g = st.number_input("Green (G)", min_value=0, max_value=255, value=100)
+                g = st.number_input("Green (G)", min_value=0, max_value=255, value=100, help="Enter value between 0-255. Typical for mature maize: 35-51")
             with col3:
-                b = st.number_input("Blue (B)", min_value=0, max_value=255, value=100)
+                b = st.number_input("Blue (B)", min_value=0, max_value=255, value=100, help="Enter value between 0-255. Typical for mature maize: 51-60")
         else:
             uploaded_file = st.file_uploader(
                 "Drag and drop file here (Limit 200MB - JPG, JPEG, PNG)",
-                type=["jpg", "jpeg", "png"], key="image_uploader"
+                type=["jpg", "jpeg", "png"], key="image_uploader",
+                help="Upload a clear image of maize. The app will extract average RGB values."
             )
 
             if uploaded_file is not None:
@@ -380,9 +443,9 @@ def main():
         st.markdown("## Environmental Conditions")
         col1, col2 = st.columns(2)
         with col1:
-            temp = st.slider("Temperature (°C)", 20.0, 35.0, 25.0, key="temp_slider")
+            temp = st.slider("Temperature (°C)", 20.0, 35.0, 25.0, key="temp_slider", help="Optimal range: 20-35°C")
         with col2:
-            hum = st.slider("Humidity (%)", 30.0, 80.0, 50.0, key="hum_slider")
+            hum = st.slider("Humidity (%)", 30.0, 80.0, 50.0, key="hum_slider", help="Optimal range: 30-80%")
 
         # Prediction button
         if st.button("Predict Maturity", type="primary", key="predict_btn"):
@@ -442,14 +505,14 @@ def main():
     with tab2:
         # --- Chatbot UI ---
         st.markdown("# Maize Assistant")
-        st.caption("Ask me about maize maturity prediction")
+        st.caption("Ask me about maize maturity prediction or troubleshooting")
 
         # Display chat history
         for msg in st.session_state.chat_history:
             st.chat_message(msg["role"]).write(msg["content"])
 
         # Chat input
-        if prompt := st.chat_input("Type your question here...", key="chat_input"):
+        if prompt := st.chat_input("Type your question here (e.g., 'how to use', 'rgb', 'error')...", key="chat_input"):
             # Add user message
             st.session_state.chat_history.append({"role": "user", "content": prompt})
 

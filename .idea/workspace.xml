@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fd972599-705b-4a6f-b8db-434c91a81e3c" name="Changes" comment="" />
+    <list default="true" id="fd972599-705b-4a6f-b8db-434c91a81e3c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -28,6 +30,7 @@
     &quot;Python.frontend.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Download/FER copy&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -70,7 +73,14 @@
       <workItem from="1745831019009" duration="1105000" />
       <workItem from="1745847267332" duration="6198000" />
       <workItem from="1745889796662" duration="4312000" />
-      <workItem from="1746005497344" duration="1190000" />
+      <workItem from="1746005497344" duration="2084000" />
+      <workItem from="1746021751824" duration="2448000" />
+      <workItem from="1746026609835" duration="573000" />
+      <workItem from="1747801469123" duration="381000" />
+      <workItem from="1748142925021" duration="1447000" />
+      <workItem from="1748145777487" duration="2746000" />
+      <workItem from="1748162554880" duration="664000" />
+      <workItem from="1748189454726" duration="1172000" />
     </task>
     <servers />
   </component>
